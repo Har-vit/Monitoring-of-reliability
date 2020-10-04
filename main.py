@@ -4,6 +4,7 @@ import pandas as pd
 import sqlite3
 import math
 
+
 class Main(tk.Frame):
     def __init__(self, root):
         super().__init__(root)
@@ -107,7 +108,6 @@ class Child(tk.Toplevel):
     def init_child(self):
         self.title('Добавить оценку')
         self.geometry('900x400+400+300')
-        # self.resizable(False, False)
 
         label_description = tk.Label(self, text='Вид деятельности:')
         label_description.place(x=50, y=50)
@@ -166,13 +166,14 @@ class Child(tk.Toplevel):
         self.grab_set()
         self.focus_set()
 
+
 class Update(Child):
     def __init__(self):
         super().__init__()
         self.init_edit()
         self.view = app
         self.db = db
-        # self.default_data()
+        self.default_data()
 
     def init_edit(self):
         self.title('Редактировать оценку')
@@ -183,12 +184,11 @@ class Update(Child):
 
         self.btn_ok.destroy()
 
-    # def default_data(self):
-    #     self.db.c.execute('''SELECT * FROM probabilities WHERE id=?''',
-    #                       (self.view.tree.set(self.view.tree.selection()[0], '#1'),))
-    #     row = self.db.c.fetchone()
-    #     self.entry_description.insert(0, row[1])
-    #     self.entry_probability.insert(0, row[2])
+    def default_data(self):
+        self.db.c.execute('''SELECT * FROM probabilities WHERE id=?''',
+                          (self.view.tree.set(self.view.tree.selection()[0], '#1'),))
+        row = self.db.c.fetchone()
+        self.entry_description.insert(0, row[1])
 
 
 class Search(tk.Toplevel):
@@ -200,7 +200,6 @@ class Search(tk.Toplevel):
     def init_search(self):
         self.title('Поиск')
         self.geometry('300x100+400+300')
-        # self.resizable(False, False)
 
         label_search = tk.Label(self, text='Поиск')
         label_search.place(x=50, y=20)
@@ -230,15 +229,38 @@ class DB:
                        (description, probability))
         self.conn.commit()
 
+
 def import_data():
     conn = sqlite3.connect("probabilities.db")
     df = pd.read_excel('probabilities.xlsx')
     df.to_sql("probabilities", conn, if_exists="replace", index=False)
+    c = conn.cursor()
+
+    c.executescript('''
+        PRAGMA foreign_keys=off;
+
+        BEGIN TRANSACTION;
+        ALTER TABLE probabilities RENAME TO old_table;
+
+        CREATE TABLE probabilities (id integer primary key,
+                                    description text,
+                                    probability text);
+
+        INSERT INTO probabilities SELECT * FROM old_table;
+
+        DROP TABLE old_table;
+        COMMIT TRANSACTION;
+
+        PRAGMA foreign_keys=on;''')
+
+    c.close()
+
 
 def export_data():
     conn = sqlite3.connect("probabilities.db")
     df = pd.read_sql_query("select * from probabilities;", conn)
     df.to_excel("probabilities.xlsx", index=False)
+
 
 if __name__ == "__main__":
 
@@ -254,6 +276,5 @@ if __name__ == "__main__":
     app.pack()
     root.title("Оценка надежности безошибочного выполнения задач оператором")
     root.geometry("1400x450+300+200")
-    # root.resizable(False, False)
     root.mainloop()
 
