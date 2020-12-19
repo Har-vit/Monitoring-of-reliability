@@ -57,15 +57,17 @@ def solver():
                 lbl = tk.Label(master=frm_4, text=f"элемен №_{element} Название: {plan[link][element]['name']}: Дата замены: {plan[link][element]['date'].strftime('%d.%m.%y')}")
                 lbl.grid(row=link, column=element, padx=5, pady=5, sticky='n')
 
-
 def run():
     global elements
     global names
-    os.system('add.py')
+    os.system('python add.py')
     for label in frm_com.grid_slaves():
         if int(label.grid_info()["row"]) > 0 and int(label.grid_info()["row"]) < 5:
             label.destroy()
     elements, names = get_elements()
+
+def draw():
+    os.system('python graph.py')
 
 window = tk.Tk()
 window.title("Определение оптимального срока службы элементов системы")
@@ -79,8 +81,6 @@ window.columnconfigure([0, 1, 2], weight=1, minsize=50)
 frm_1.rowconfigure([0, 1, 2], weight=0, minsize=20)
 frm_1.columnconfigure(0, weight=1, minsize=50)
 
-
-
 # Фрейм для конструктора
 frm_con = tk.Frame(master=frm_1, relief=tk.SUNKEN, borderwidth=3)
 frm_con.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
@@ -88,12 +88,11 @@ frm_con.grid(row=0, column=0, padx=5, pady=5, sticky='nsew')
 frm_con.rowconfigure([0, 1, 2, 3, 4], weight=0, minsize=10)
 frm_con.columnconfigure(0, weight=1, minsize=25)
 
-
 # Данные
 shema_data = {}
 
 # Данные для конструктора [id, link, name, наработка на отказ, номинальная интенсивность отказа]
-# данные по первой конфигурации элекментов
+# данные по первой конфигурации элементов
 
 def get_data():
     sql = f'SELECT * FROM elements'
@@ -101,7 +100,6 @@ def get_data():
     data = conn.execute(sql).fetchall()
     conn.close()
     return data
-
 
 def get_elements():
     elements = {}
@@ -113,7 +111,6 @@ def get_elements():
 
 elements, names = get_elements()
 
-
 def get_element(name):
     sql = f"SELECT * FROM elements WHERE name='{name}'"
     conn = sqlite3.connect('database.db')
@@ -122,7 +119,6 @@ def get_element(name):
     entry_1['text'] = data[1]
     entry_2['text'] = str(data[2])
     entry_3['text'] = str(data[3])
-
 
 def ok_1():
     for label in frm_com.grid_slaves():
@@ -244,7 +240,6 @@ def ok_4():
     ent_date_3.grid(row=3, column=3, padx=5, pady=5, sticky='n')
     ent_date_4.grid(row=4, column=3, padx=5, pady=5, sticky='n')
 
-
 #Виджеты Конструктор
 constructer = tk.Label(master=frm_con, text='Конструктор')
 constructer.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
@@ -264,7 +259,6 @@ btn_3.grid(row=4, column=0, padx=5, pady=5, sticky='n')
 btn_4 = tk.Button(master=frm_con, text='4', width=10, command=ok_4)
 btn_4.grid(row=5, column=0, padx=5, pady=5, sticky='n')
 
-
 # Фрейм для компонент
 frm_com = tk.Frame(master=frm_1, relief=tk.SUNKEN, borderwidth=3)
 frm_com.grid(row=0, column=1, padx=5, columnspan=2, pady=5, sticky='nsew')
@@ -273,13 +267,11 @@ frm_com.rowconfigure(0, weight=0, minsize=10)
 frm_com.rowconfigure([1, 2, 3, 4, 5], weight=0, minsize=25)
 frm_com.columnconfigure([1, 2], weight=1, minsize=25)
 
-
 # Виджеты для компонент
 lbl_components = tk.Label(master=frm_com, text='Компоненты')
 lbl_date = tk.Label(master=frm_com, text='Дата установки')
 lbl_components.grid(row=0, column=0, columnspan=3, padx=5, pady=5, sticky="n")
 lbl_date.grid(row=0, column=3, padx=5, pady=5, sticky="n")
-
 
 def h(name):
     sql = f"SELECT * FROM elements WHERE name='{name}'"
@@ -287,7 +279,6 @@ def h(name):
     data = conn.execute(sql).fetchone()
     conn.close()
     return data
-
 
 def add_link():
     link = number_of_link.get()
@@ -404,11 +395,8 @@ def add_link():
         lbl_name_1 = tk.Label(master=frm_2, text=f"{name_of_element_1}: дата установки: {date_of_element_1.strftime('%d.%m.%y')}")
         lbl_name_1.grid(row=start, column=1, sticky='n')
 
-
-
-btn_add = tk.Button(master=frm_com, text='Добавить звевно в цепь', command=add_link)
+btn_add = tk.Button(master=frm_com, text='Добавить звено в цепь', command=add_link)
 btn_add.grid(row=5, column=2, sticky='ew')
-
 
 # требуемый уровень надежности
 reliability = tk.Label(master=frm_1, text='Требуемый уровень надежности:')
@@ -420,6 +408,8 @@ ent_reliability.grid(row=1, column=1, padx=10, pady=10,)
 btn_reliability = tk.Button(master=frm_1, text="Вывод плана замены оборудования", command=solver)
 btn_reliability.grid(row=1, column=2, padx=10, pady=10, sticky='e')
 
+# btn_graph = tk.Button(master=frm_1, text='Вывести график', command=draw)
+# btn_graph.grid(row=2, column=2, padx=10, pady=10, sticky='e')
 
 # Схема
 frm_2 = tk.Frame(master=window, relief=tk.SUNKEN, borderwidth=3)
@@ -430,13 +420,11 @@ frm_2.columnconfigure([0, 1, 2, 3, 4], weight=1, minsize=50)
 shema = tk.Label(master=frm_2, text='Схема')
 shema.grid(row=0, column=0, padx=5, pady=5, sticky="n")
 
-
 # Информация о выбранном компоненте
 frm_3 = tk.Frame(master=window, relief=tk.SUNKEN, borderwidth=3)
 frm_3.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky='nsew')
 inf = tk.Label(master=frm_3, text='Информация о выбранном компоненте:')
 inf.grid(row=0, column=0, padx=5, pady=5, sticky="n")
-
 
 # Наименование
 label_1 = tk.Label(master=frm_3, text="Наименование:")
@@ -444,13 +432,11 @@ entry_1 = tk.Label(master=frm_3, width=50, relief=tk.SUNKEN, borderwidth=3)
 label_1.grid(row=1, column=0, sticky="e")
 entry_1.grid(row=1, column=1)
 
-
 # Наработка на отказ
 label_2 = tk.Label(master=frm_3, text="Наработка на отказ:")
 entry_2 = tk.Label(master=frm_3, width=50, relief=tk.SUNKEN, borderwidth=3)
 label_2.grid(row=2, column=0, sticky="e")
 entry_2.grid(row=2, column=1)
-
 
 #Номинальная интенсивность отказов
 label_3 = tk.Label(master=frm_3, text="Номинальная интенсивность отказов:")
@@ -458,11 +444,9 @@ entry_3 = tk.Label(master=frm_3, width=50, relief=tk.SUNKEN, borderwidth=3)
 label_3.grid(row=3, column=0, sticky="e")
 entry_3.grid(row=3, column=1)
 
-
 # Кнопка добавить
 label_4 = tk.Button(master=frm_3, text="Добавить компонент", command=run)
 label_4.grid(row=4, column=1, sticky="e")
-
 
 # Вывод плана замены оборудования
 frm_4 = tk.Frame(master=window, relief=tk.SUNKEN, borderwidth=3)
