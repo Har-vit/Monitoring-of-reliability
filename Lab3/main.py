@@ -44,14 +44,14 @@ class Main(tk.Frame):
         self.tree = ttk.Treeview(self, columns=('ID', 'description', 'probability1', 'probability2'), height=15, show='headings')
 
         self.tree.column('ID', width=30, anchor=tk.CENTER)
-        self.tree.column('description', width=500, anchor='w')
-        self.tree.column('probability1', width=150, anchor='w')
-        self.tree.column('probability2', width=150, anchor='w')
+        self.tree.column('description', width=300, anchor='w')
+        self.tree.column('probability1', width=300, anchor='w')
+        self.tree.column('probability2', width=200, anchor='w')
 
         self.tree.heading('ID', text='ID')
         self.tree.heading('description', text='Наименование ПО')
-        self.tree.heading('probability1', text='Соотношение 1')
-        self.tree.heading('probability2', text='Соотношение 2')
+        self.tree.heading('probability1', text='Первоначальное количество ошибок')
+        self.tree.heading('probability2', text='Мера доверия к модели')
 
         self.tree.pack()
 
@@ -176,7 +176,7 @@ class Update(Child):
     def init_edit(self):
         self.title('Редактировать оценку')
         btn_edit = ttk.Button(self, text='Редактировать')
-        btn_edit.place(x=185, y=300)
+        btn_edit.place(x=230, y=220)
         btn_edit.bind('<Button-1>', lambda event: self.view.update_record(self.entry_description.get(),
                                                                           self.probability1_culc(),
                                                                           self.probability2_culc()))
@@ -217,7 +217,7 @@ class Search(tk.Toplevel):
 
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect('probabilities.db')
+        self.conn = sqlite3.connect('probabilities3.db')
         self.c = self.conn.cursor()
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS probabilities (id integer primary key, description text, probability1 text, probability2 text)''')
@@ -230,7 +230,7 @@ class DB:
 
 
 def import_data():
-    conn = sqlite3.connect("probabilities.db")
+    conn = sqlite3.connect("probabilities3.db")
     df = pd.read_excel('probabilities.xlsx')
     df.to_sql("probabilities", conn, if_exists="replace", index=False)
     c = conn.cursor()
@@ -257,7 +257,7 @@ def import_data():
 
 
 def export_data():
-    conn = sqlite3.connect("probabilities.db")
+    conn = sqlite3.connect("probabilities3.db")
     df = pd.read_sql_query("select * from probabilities;", conn)
     df.to_excel("probabilities.xlsx", index=False)
 
@@ -277,4 +277,3 @@ if __name__ == "__main__":
     root.title("Оценка надежности ПО")
     root.geometry("850x450+300+200")
     root.mainloop()
-
