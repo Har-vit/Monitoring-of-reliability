@@ -14,9 +14,9 @@ def func(script_name):
     os.system(script_name)
 
 
-button1 = tk.Button(master=frame_start, text='Lab #1', width=39, command=lambda: os.system('python Lab1.py'))
-button2 = tk.Button(master=frame_start, text='Lab #2', width=39, command=lambda: os.system('python Lab2.py'))
-button3 = tk.Button(master=frame_start, text='Lab #3', width=39, command=lambda: os.system('python Lab3.py'))
+button1 = tk.Button(master=frame_start, text='Оценка надежности безошибочного выполнения задач оператором', width=70, command=lambda: os.system('python Lab1.py'))
+button2 = tk.Button(master=frame_start, text='Определение оптимального срока службы элементов системы', width=70, command=lambda: os.system('python Lab2.py'))
+button3 = tk.Button(master=frame_start, text='Оценка надежности ПО', width=70, command=lambda: os.system('python Lab3.py'))
 
 button1.pack()
 button2.pack()

@@ -41,44 +41,44 @@ class Main(tk.Frame):
                                 compound=tk.TOP, command=self.view_records)
         btn_refresh.pack(side=tk.LEFT)
 
-        self.tree = ttk.Treeview(self, columns=('ID', 'description', 'probability1', 'probability2'), height=15, show='headings')
+        self.tree = ttk.Treeview(self, columns=('ID', 'description', 'faults', 'credence'), height=15, show='headings')
 
         self.tree.column('ID', width=30, anchor=tk.CENTER)
         self.tree.column('description', width=300, anchor='w')
-        self.tree.column('probability1', width=300, anchor='w')
-        self.tree.column('probability2', width=200, anchor='w')
+        self.tree.column('faults', width=300, anchor='w')
+        self.tree.column('credence', width=200, anchor='w')
 
         self.tree.heading('ID', text='ID')
         self.tree.heading('description', text='Наименование ПО')
-        self.tree.heading('probability1', text='Первоначальное количество ошибок')
-        self.tree.heading('probability2', text='Мера доверия к модели')
+        self.tree.heading('faults', text='Первоначальное количество ошибок')
+        self.tree.heading('credence', text='Мера доверия к модели')
 
         self.tree.pack()
 
-    def records(self, description, probability1, probability2):
-        self.db.insert_data(description, probability1, probability2)
+    def records(self, description, faults, credence):
+        self.db.insert_data(description, faults, credence)
         self.view_records()
 
-    def update_record(self, description, probability1, probability2):
-        self.db.c.execute('''UPDATE probabilities SET description=?, probability1=?, probability2=? WHERE ID=?''',
-                          (description, probability1, probability2, self.tree.set(self.tree.selection()[0], '#1')))
+    def update_record(self, description, faults, credence):
+        self.db.c.execute('''UPDATE reliability SET description=?, faults=?, credence=? WHERE ID=?''',
+                          (description, faults, credence, self.tree.set(self.tree.selection()[0], '#1')))
         self.db.conn.commit()
         self.view_records()
 
     def view_records(self):
-        self.db.c.execute('''SELECT * FROM probabilities''')
+        self.db.c.execute('''SELECT * FROM reliability''')
         [self.tree.delete(i) for i in self.tree.get_children()]
         [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
     def delete_records(self):
         for selection_item in self.tree.selection():
-            self.db.c.execute('''DELETE FROM probabilities WHERE id=?''', (self.tree.set(selection_item, '#1'),))
+            self.db.c.execute('''DELETE FROM reliability WHERE id=?''', (self.tree.set(selection_item, '#1'),))
         self.db.conn.commit()
         self.view_records()
 
     def search_records(self, description):
         description = ('%' + description + '%',)
-        self.db.c.execute('''SELECT * FROM probabilities WHERE description LIKE ?''', description)
+        self.db.c.execute('''SELECT * FROM reliability WHERE description LIKE ?''', description)
         [self.tree.delete(i) for i in self.tree.get_children()]
         [self.tree.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
@@ -97,27 +97,27 @@ class Child(tk.Toplevel):
         super().__init__(root)
         self.init_child()
         self.view = app
-        self.probability1_culc()
-        self.probability2_culc()
+        self.faults_culc()
+        self.credence_culc()
 
-    def probability1_culc(self):
+    def faults_culc(self):
         try:
             numerator = float(self.entry_1.get()) * float(self.entry_2.get())
             denominator = float(self.entry_3.get())
-            return numerator / denominator
+            return round(numerator / denominator, 2)
         except ValueError:
             tk.Label(text="Ошибка. Ввод некорректен.")
 
-    def probability2_culc(self):
+    def credence_culc(self):
         try:
             if float(self.entry_1.get()) * float(self.entry_2.get()) == float(self.entry_3.get()):
                 numerator = float(self.entry_2.get())
                 denominator = float(self.entry_2.get()) + float(self.entry_4.get()) + 1
-                return numerator / denominator
+                return round(numerator / denominator, 2)
             else:
                 numerator = float(self.entry_2.get()) / (float(self.entry_3.get()) - 1)
                 denominator = (float(self.entry_2.get()) + float(self.entry_4.get()) + 1) / (float(self.entry_3.get()) + float(self.entry_4.get()))
-                return numerator / denominator
+                return round(numerator / denominator, 2)
         except ValueError:
             tk.Label(text="Ошибка. Ввод некорректен.")
 
@@ -160,7 +160,7 @@ class Child(tk.Toplevel):
 
         self.btn_ok = ttk.Button(self, text='Добавить')
         self.btn_ok.place(x=265, y=220)
-        self.btn_ok.bind('<Button-1>', lambda event: self.view.records(self.entry_description.get(), self.probability1_culc(), self.probability2_culc()))
+        self.btn_ok.bind('<Button-1>', lambda event: self.view.records(self.entry_description.get(), self.faults_culc(), self.credence_culc()))
         self.grab_set()
         self.focus_set()
 
@@ -178,13 +178,13 @@ class Update(Child):
         btn_edit = ttk.Button(self, text='Редактировать')
         btn_edit.place(x=230, y=220)
         btn_edit.bind('<Button-1>', lambda event: self.view.update_record(self.entry_description.get(),
-                                                                          self.probability1_culc(),
-                                                                          self.probability2_culc()))
+                                                                          self.faults_culc(),
+                                                                          self.credence_culc()))
 
         self.btn_ok.destroy()
 
     def default_data(self):
-        self.db.c.execute('''SELECT * FROM probabilities WHERE id=?''',
+        self.db.c.execute('''SELECT * FROM reliability WHERE id=?''',
                           (self.view.tree.set(self.view.tree.selection()[0], '#1'),))
         row = self.db.c.fetchone()
         self.entry_description.insert(0, row[1])
@@ -217,36 +217,36 @@ class Search(tk.Toplevel):
 
 class DB:
     def __init__(self):
-        self.conn = sqlite3.connect('probabilities3.db')
+        self.conn = sqlite3.connect('reliability.db')
         self.c = self.conn.cursor()
         self.c.execute(
-            '''CREATE TABLE IF NOT EXISTS probabilities (id integer primary key, description text, probability1 text, probability2 text)''')
+            '''CREATE TABLE IF NOT EXISTS reliability (id integer primary key, description text, faults text, credence text)''')
         self.conn.commit()
 
-    def insert_data(self, description, probability1, probability2):
-        self.c.execute('''INSERT INTO probabilities(description, probability1, probability2) VALUES (?, ?, ?)''',
-                       (description, probability1, probability2))
+    def insert_data(self, description, faults, credence):
+        self.c.execute('''INSERT INTO reliability(description, faults, credence) VALUES (?, ?, ?)''',
+                       (description, faults, credence))
         self.conn.commit()
 
 
 def import_data():
-    conn = sqlite3.connect("probabilities3.db")
-    df = pd.read_excel('probabilities.xlsx')
-    df.to_sql("probabilities", conn, if_exists="replace", index=False)
+    conn = sqlite3.connect("reliability.db")
+    df = pd.read_excel('reliability.xlsx')
+    df.to_sql("reliability", conn, if_exists="replace", index=False)
     c = conn.cursor()
 
     c.executescript('''
         PRAGMA foreign_keys=off;
 
         BEGIN TRANSACTION;
-        ALTER TABLE probabilities RENAME TO old_table;
+        ALTER TABLE reliability RENAME TO old_table;
 
-        CREATE TABLE probabilities (id integer primary key,
+        CREATE TABLE reliability (id integer primary key,
                                     description text,
-                                    probability1 text,
-                                    probability2 text);
+                                    faults text,
+                                    credence text);
 
-        INSERT INTO probabilities SELECT * FROM old_table;
+        INSERT INTO reliability SELECT * FROM old_table;
 
         DROP TABLE old_table;
         COMMIT TRANSACTION;
@@ -257,9 +257,9 @@ def import_data():
 
 
 def export_data():
-    conn = sqlite3.connect("probabilities3.db")
-    df = pd.read_sql_query("select * from probabilities;", conn)
-    df.to_excel("probabilities.xlsx", index=False)
+    conn = sqlite3.connect("reliability.db")
+    df = pd.read_sql_query("select * from reliability;", conn)
+    df.to_excel("reliability.xlsx", index=False)
 
 
 if __name__ == "__main__":
@@ -277,3 +277,4 @@ if __name__ == "__main__":
     root.title("Оценка надежности ПО")
     root.geometry("850x450+300+200")
     root.mainloop()
+

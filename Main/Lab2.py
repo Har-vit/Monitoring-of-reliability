@@ -54,7 +54,7 @@ def solver():
                 lbl = tk.Label(master=frm_4, text=f"Звено №_{link} элемент №_{element} Название: {plan[link][element]['name']}: Дата замены: {plan[link][element]['date'].strftime('%d.%m.%y')}")
                 lbl.grid(row=link, column=element, padx=5, pady=5, sticky='n')
             else:
-                lbl = tk.Label(master=frm_4, text=f"элемен №_{element} Название: {plan[link][element]['name']}: Дата замены: {plan[link][element]['date'].strftime('%d.%m.%y')}")
+                lbl = tk.Label(master=frm_4, text=f"элемент №_{element} Название: {plan[link][element]['name']}: Дата замены: {plan[link][element]['date'].strftime('%d.%m.%y')}")
                 lbl.grid(row=link, column=element, padx=5, pady=5, sticky='n')
 
 def run():
